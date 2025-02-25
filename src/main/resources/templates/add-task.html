@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить задачу</title>
+    <style>
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .field-error:focus {
+            border-color: red;
+        }
+        .error::before {
+            content: "⚠ ";
+            /*font-weight: bold;*/
+            margin-right: 5px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            width: 50%;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .field-error {
+            border: 2px solid red;
+        }
+    </style>
+</head>
+<body>
+<h1>Добавить новую задачу</h1>
+<form th:action="@{/tasks/add}" th:object="${task}" method="post">
+    <label for="title">Название:</label>
+    <input type="text" id="title" th:field="*{title}" th:classappend="${#fields.hasErrors('title')} ? 'field-error'" required>
+    <div class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+
+    <label for="description">Описание:</label>
+    <textarea id="description" th:field="*{description}" th:classappend="${#fields.hasErrors('description')} ? 'field-error'"></textarea>
+    <div class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+
+    <label for="deadline">Дедлайн:</label>
+    <input type="datetime-local" id="deadline" th:field="*{deadline}" th:classappend="${#fields.hasErrors('deadline')} ? 'field-error'" required>
+    <div class="error" th:if="${#fields.hasErrors('deadline')}" th:errors="*{deadline}"></div>
+
+    <label for="priority">Приоритет:</label>
+    <select id="priority" th:field="*{priority}" th:classappend="${#fields.hasErrors('priority')} ? 'field-error'">
+        <option value="">Выберите приоритет</option>
+        <option value="LOW">Низкий</option>
+        <option value="MEDIUM">Средний</option>
+        <option value="HIGH">Высокий</option>
+    </select>
+    <div class="error" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
+
+    <button type="submit">Добавить задачу</button>
+</form>
+<a href="/tasks">Вернуться к списку задач</a>
+</body>
+</html>
