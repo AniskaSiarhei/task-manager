@@ -1,13 +1,14 @@
 package com.example.task_manager.controller;
 
 import com.example.task_manager.model.Task;
+import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,9 +22,14 @@ public class TaskController {
     @Autowired
     private TaskRepository taskRepository;
 
+    private User getCurrentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
     @GetMapping("/tasks")
     public String getAllTasks(Model model) {
-        model.addAttribute("tasks", taskRepository.findAll());
+        User currentUser = getCurrentUser();
+        model.addAttribute("tasks", taskRepository.findByUser(currentUser));
         return "tasks";
     }
 
@@ -40,6 +46,7 @@ public class TaskController {
         }
 
         task.setCompleted(false);   //
+        task.setUser(getCurrentUser());
         taskRepository.save(task);
         return "redirect:/tasks";
     }
@@ -48,7 +55,7 @@ public class TaskController {
     public String showEditTaskForm(@PathVariable("id") Long id, Model model) {
 
         Optional<Task> task = taskRepository.findById(id);
-        if (task.isPresent()) {
+        if (task.isPresent() && task.get().getUser().getId().equals(getCurrentUser().getId())) {
             model.addAttribute("task", task.get());
             return "edit-task";
         }
@@ -67,13 +74,17 @@ public class TaskController {
         }
 
         task.setId(id);
+        task.setUser(getCurrentUser());
         taskRepository.save(task);
         return "redirect:/tasks";
     }
 
     @PostMapping("/tasks/delete/{id}")
     public String deleteTask(@PathVariable("id") Long id) {
-        taskRepository.deleteById(id);
+        Optional<Task> task = taskRepository.findById(id);
+        if (task.isPresent() && task.get().getUser().getId().equals(getCurrentUser().getId())) {
+            taskRepository.delete(task.get());
+        }
         return "redirect:/tasks";
     }
 }

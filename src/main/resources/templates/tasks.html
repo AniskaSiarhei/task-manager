@@ -39,7 +39,12 @@
 </head>
 <body>
 <h1>Список задач</h1>
-<a href="/tasks/add">Добавить новую задачу</a>
+<div>
+    <a href="/tasks/add">Добавить новую задачу</a> |
+    <form th:action="@{/logout}" method="post" style="display:inline;">
+        <button type="submit" style="background:none;border:none;color:blue;cursor:pointer;">Выйти</button>
+    </form>
+</div>
 <table>
     <thead>
     <tr>
