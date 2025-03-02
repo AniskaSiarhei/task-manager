@@ -31,9 +31,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(User user,
-                           @RequestParam(value = "isAdmin", defaultValue = "false") boolean isAdmin) {
-        userService.saveUser(user, isAdmin);
+    public String register(User user) {
+        userService.saveUser(user, false);      // Все новые пользователи - не админы
         return "redirect:/login";
     }
 
