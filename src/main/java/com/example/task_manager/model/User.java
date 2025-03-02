@@ -1,18 +1,24 @@
 package com.example.task_manager.model;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -26,12 +32,22 @@ public class User implements UserDetails {
     private String email;
     private String password;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    private List<String> roles;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Task> tasks;
 
+    public User() {
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -54,9 +70,6 @@ public class User implements UserDetails {
         return true;
     }
 
-    public User() {
-    }
-
     public Long getId() {
         return this.id;
     }
@@ -71,6 +84,10 @@ public class User implements UserDetails {
 
     public String getPassword() {
         return this.password;
+    }
+
+    public List<String> getRoles() {
+        return this.roles;
     }
 
     public List<Task> getTasks() {
@@ -91,6 +108,10 @@ public class User implements UserDetails {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 
     public void setTasks(List<Task> tasks) {
@@ -114,6 +135,9 @@ public class User implements UserDetails {
         final Object this$password = this.getPassword();
         final Object other$password = other.getPassword();
         if (this$password == null ? other$password != null : !this$password.equals(other$password)) return false;
+        final Object this$roles = this.getRoles();
+        final Object other$roles = other.getRoles();
+        if (this$roles == null ? other$roles != null : !this$roles.equals(other$roles)) return false;
         final Object this$tasks = this.getTasks();
         final Object other$tasks = other.getTasks();
         if (this$tasks == null ? other$tasks != null : !this$tasks.equals(other$tasks)) return false;
@@ -135,12 +159,14 @@ public class User implements UserDetails {
         result = result * PRIME + ($email == null ? 43 : $email.hashCode());
         final Object $password = this.getPassword();
         result = result * PRIME + ($password == null ? 43 : $password.hashCode());
+        final Object $roles = this.getRoles();
+        result = result * PRIME + ($roles == null ? 43 : $roles.hashCode());
         final Object $tasks = this.getTasks();
         result = result * PRIME + ($tasks == null ? 43 : $tasks.hashCode());
         return result;
     }
 
     public String toString() {
-        return "User(id=" + this.getId() + ", username=" + this.getUsername() + ", email=" + this.getEmail() + ", password=" + this.getPassword() + ", tasks=" + this.getTasks() + ")";
+        return "User(id=" + this.getId() + ", username=" + this.getUsername() + ", email=" + this.getEmail() + ", password=" + this.getPassword() + ", roles=" + this.getRoles() + ", tasks=" + this.getTasks() + ")";
     }
 }

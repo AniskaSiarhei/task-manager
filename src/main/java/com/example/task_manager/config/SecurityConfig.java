@@ -29,7 +29,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll() // доступ без авторизации
-                        .anyRequest().authenticated() // все остальное требует авторизации
+                        .requestMatchers("/admin/**").hasRole("ADMIN")      // Только для админов
+                        .requestMatchers("tasks/**").hasRole("USER")        // Для всех пользователей
+                        .anyRequest().authenticated()       // все остальное требует авторизации
                 )
                 .formLogin((form) -> form
                         .loginPage("/login")

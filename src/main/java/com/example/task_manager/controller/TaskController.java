@@ -26,10 +26,19 @@ public class TaskController {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    private boolean isAdmin() {
+        return getCurrentUser().getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+    }
+
     @GetMapping("/tasks")
     public String getAllTasks(Model model) {
         User currentUser = getCurrentUser();
-        model.addAttribute("tasks", taskRepository.findByUser(currentUser));
+        if (isAdmin()) {
+            model.addAttribute("tasks", taskRepository.findAll());
+        } else {
+            model.addAttribute("tasks", taskRepository.findByUser(currentUser));
+        }
         return "tasks";
     }
 
@@ -55,9 +64,12 @@ public class TaskController {
     public String showEditTaskForm(@PathVariable("id") Long id, Model model) {
 
         Optional<Task> task = taskRepository.findById(id);
-        if (task.isPresent() && task.get().getUser().getId().equals(getCurrentUser().getId())) {
-            model.addAttribute("task", task.get());
-            return "edit-task";
+        if (task.isPresent()) {
+            User currentUser = getCurrentUser();
+            if (isAdmin() || task.get().getUser().getId().equals(currentUser.getId())) {
+                model.addAttribute("task", task.get());
+                return "edit-task";
+            }
         }
         return "redirect:/tasks";
     }
@@ -73,17 +85,26 @@ public class TaskController {
             return "edit-task";
         }
 
-        task.setId(id);
-        task.setUser(getCurrentUser());
-        taskRepository.save(task);
+        Optional<Task> existingTask = taskRepository.findById(id);
+        if (existingTask.isPresent()) {
+            User currentUser = getCurrentUser();
+            if (isAdmin() || existingTask.get().getUser().getId().equals(currentUser.getId())) {
+                task.setId(id);
+                task.setUser(existingTask.get().getUser());
+                taskRepository.save(task);
+            }
+        }
         return "redirect:/tasks";
     }
 
     @PostMapping("/tasks/delete/{id}")
     public String deleteTask(@PathVariable("id") Long id) {
         Optional<Task> task = taskRepository.findById(id);
-        if (task.isPresent() && task.get().getUser().getId().equals(getCurrentUser().getId())) {
-            taskRepository.delete(task.get());
+        if (task.isPresent()) {
+            User currentUser = getCurrentUser();
+            if (isAdmin() || task.get().getUser().getId().equals(currentUser.getId())) {
+                taskRepository.delete(task.get());
+            }
         }
         return "redirect:/tasks";
     }
