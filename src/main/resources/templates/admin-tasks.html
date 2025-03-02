@@ -2,9 +2,9 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Task Manager</title>
+    <title>Admin - Все задачи</title>
     <style>
-        table { width: 80%; border-collapse: collapse; margin: 20px auto; }
+        table { width: 90%; border-collapse: collapse; margin: 20px auto; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
         .button { padding: 5px 10px; text-decoration: none; color: white; border-radius: 4px; }
@@ -15,20 +15,14 @@
     </style>
 </head>
 <body>
-<h1>Список задач</h1>
+<h1>Все задачи</h1>
 <div>
-    <a href="/tasks/add">Добавить новую задачу</a> |
-    <span th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
-        <a href="/admin/tasks">Управление всеми задачами</a> |
-        <a href="/admin/users">Пользователи</a> |
-    </span>
+    <a href="/tasks">Мои задачи</a> |
+    <a href="/admin/users">Пользователи</a> |
     <form th:action="@{/logout}" method="post" style="display:inline;">
         <button type="submit" style="background:none;border:none;color:blue;cursor:pointer;">Выйти</button>
     </form>
 </div>
-<p th:if="${#authorization.expression('hasRole(''ADMIN'')')}" style="color: gray;">
-    Это ваши задачи. Для управления всеми задачами перейдите в <a href="/admin/tasks">админ-панель</a>.
-</p>
 <table>
     <thead>
     <tr>
@@ -38,6 +32,7 @@
         <th>Дедлайн</th>
         <th>Приоритет</th>
         <th>Статус</th>
+        <th>Владелец</th>
         <th>Действия</th>
     </tr>
     </thead>
@@ -49,9 +44,10 @@
         <td th:text="${task.deadline}"></td>
         <td th:text="${task.priority}"></td>
         <td th:text="${task.completed ? 'Выполнено' : 'Не выполнено'}"></td>
+        <td th:text="${task.user?.username ?: 'Нет владельца'}"></td>
         <td>
-            <a th:href="@{/tasks/edit/{id}(id=${task.id})}" class="button edit">Редактировать</a>
-            <form th:action="@{/tasks/delete/{id}(id=${task.id})}" method="post" style="display:inline;">
+            <a th:href="@{/admin/tasks/edit/{id}(id=${task.id})}" class="button edit">Редактировать</a>
+            <form th:action="@{/admin/tasks/delete/{id}(id=${task.id})}" method="post" style="display:inline;">
                 <button type="submit" class="button delete"
                         onclick="return confirm('Вы уверены, что хотите удалить задачу?');">Удалить</button>
             </form>

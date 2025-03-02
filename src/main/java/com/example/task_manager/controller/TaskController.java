@@ -19,8 +19,11 @@ import java.util.Optional;
 @Controller
 public class TaskController {
 
-    @Autowired
-    private TaskRepository taskRepository;
+    private final TaskRepository taskRepository;
+
+    public TaskController(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
+    }
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -34,11 +37,7 @@ public class TaskController {
     @GetMapping("/tasks")
     public String getAllTasks(Model model) {
         User currentUser = getCurrentUser();
-        if (isAdmin()) {
-            model.addAttribute("tasks", taskRepository.findAll());
-        } else {
             model.addAttribute("tasks", taskRepository.findByUser(currentUser));
-        }
         return "tasks";
     }
 
