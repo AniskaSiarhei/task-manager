@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -30,7 +31,17 @@ public class AdminController {
 
     @GetMapping("/tasks")
     public String getAllTasks(Model model) {
-        model.addAttribute("tasks", taskRepository.findAll());
+
+        List<Task> allTasks = taskRepository.findAll();
+        List<Task> incompleteTasks = allTasks.stream()
+                .filter(task -> !task.isCompleted())
+                .toList();
+        List<Task> completedTasks = allTasks.stream()
+                .filter(Task::isCompleted)
+                .toList();
+
+        model.addAttribute("incompleteTasks", incompleteTasks);
+        model.addAttribute("completedTasks", completedTasks);
         return "admin-tasks";
     }
 
