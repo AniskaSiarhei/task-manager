@@ -32,7 +32,6 @@
 <div class="container mt-4">
     <h1>Все задачи</h1>
 
-    <!-- Вкладки -->
     <ul class="nav nav-tabs" id="adminTaskTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="incomplete-tab" data-bs-toggle="tab" data-bs-target="#incomplete" type="button" role="tab" aria-controls="incomplete" aria-selected="true">Несделанные задачи</button>
@@ -42,92 +41,14 @@
         </li>
     </ul>
 
-    <!-- Содержимое вкладок -->
     <div class="tab-content" id="adminTaskTabContent">
-        <!-- Несделанные задачи -->
         <div class="tab-pane fade show active" id="incomplete" role="tabpanel" aria-labelledby="incomplete-tab">
-            <div th:if="${incompleteTasks != null and !incompleteTasks.isEmpty()}" class="mt-3">
-                <table class="table table-striped">
-                    <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Название</th>
-                        <th>Описание</th>
-                        <th>Дедлайн</th>
-                        <th>Приоритет</th>
-<!--                        <th>Статус</th>-->
-                        <th>Владелец</th>
-                        <th>Действия</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="task : ${incompleteTasks}">
-                        <td th:text="${task.id}"></td>
-                        <td th:text="${task.title}"></td>
-                        <td th:text="${task.description}"></td>
-                        <td th:text="${task.deadline}"></td>
-                        <td th:text="${task.priority}"></td>
-<!--                        <td th:text="${task.completed ? 'Выполнено' : 'Не выполнено'}"></td>-->
-                        <td th:text="${task.user?.username ?: 'Нет владельца'}"></td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-primary edit-task-btn"
-                                    th:data-task-id="${task.id}">Редактировать</button>
-                            <form th:action="@{/admin/tasks/delete/{id}(id=${task.id})}" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Вы уверены, что хотите удалить задачу?');">Удалить</button>
-                            </form>
-                            <button type="button" class="btn btn-sm btn-success complete-task-btn"
-                                    th:data-task-id="${task.id}" th:if="${!task.completed}">Выполнено</button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div th:if="${incompleteTasks == null or incompleteTasks.isEmpty()}" class="alert alert-info mt-3">
-                В системе пока нет несделанных задач.
-            </div>
+            <div th:replace="~{fragments/admin-task-table-fragment :: adminTaskTable(tasks=${incompleteTasks}, isCompleted=false)}" th:if="${incompleteTasks != null and !incompleteTasks.isEmpty()}" class="mt-3"></div>
+            <div th:if="${incompleteTasks == null or incompleteTasks.isEmpty()}" class="alert alert-info mt-3">В системе пока нет несделанных задач.</div>
         </div>
-
-        <!-- Сделанные задачи -->
         <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
-            <div th:if="${completedTasks != null and !completedTasks.isEmpty()}" class="mt-3">
-                <table class="table table-striped">
-                    <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Название</th>
-                        <th>Описание</th>
-                        <th>Дедлайн</th>
-                        <th>Приоритет</th>
-<!--                        <th>Статус</th>-->
-                        <th>Владелец</th>
-                        <th>Действия</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="task : ${completedTasks}">
-                        <td th:text="${task.id}"></td>
-                        <td th:text="${task.title}"></td>
-                        <td th:text="${task.description}"></td>
-                        <td th:text="${task.deadline}"></td>
-                        <td th:text="${task.priority}"></td>
-<!--                        <td th:text="${task.completed ? 'Выполнено' : 'Не выполнено'}"></td>-->
-                        <td th:text="${task.user?.username ?: 'Нет владельца'}"></td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-primary edit-task-btn"
-                                    th:data-task-id="${task.id}">Редактировать</button>
-                            <form th:action="@{/admin/tasks/delete/{id}(id=${task.id})}" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Вы уверены, что хотите удалить задачу?');">Удалить</button>
-                            </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div th:if="${completedTasks == null or completedTasks.isEmpty()}" class="alert alert-info mt-3">
-                В системе пока нет сделанных задач.
-            </div>
+            <div th:replace="~{fragments/admin-task-table-fragment :: adminTaskTable(tasks=${completedTasks}, isCompleted=true)}" th:if="${completedTasks != null and !completedTasks.isEmpty()}" class="mt-3"></div>
+            <div th:if="${completedTasks == null or completedTasks.isEmpty()}" class="alert alert-info mt-3">В системе пока нет сделанных задач.</div>
         </div>
     </div>
 </div>
@@ -153,44 +74,73 @@
         var csrfToken = /*[[${_csrf.token}]]*/ '';
         var csrfHeader = /*[[${_csrf.headerName}]]*/ '';
 
-        $('.edit-task-btn').click(function(e) {
-            e.preventDefault();
-            var taskId = $(this).data('task-id');
-            $.ajax({
-                url: '/admin/tasks/edit/' + taskId,
-                method: 'GET',
-                success: function(data) {
-                    $('#editTaskModalContent .modal-body').html(data);
-                    $('#editTaskModal').modal('show');
-                    attachFormSubmitHandler(taskId);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Ошибка загрузки формы: ' + status + ' - ' + error);
-                    alert('Ошибка загрузки формы редактирования: ' + xhr.status);
-                }
+        function updateTables() {
+            $.get('/admin/tasks', function(data) {
+                var $newContent = $(data);
+                $('#incomplete').html($newContent.find('#incomplete').html());
+                $('#completed').html($newContent.find('#completed').html());
+                attachEventHandlers();
             });
-        });
+        }
 
-        $('.complete-task-btn').click(function(e) {
-            e.preventDefault();
-            var taskId = $(this).data('task-id');
-            console.log('Отправка запроса на завершение задачи ID: ' + taskId);
-            $.ajax({
-                url: '/admin/tasks/complete/' + taskId,
-                method: 'POST',
-                headers: {
-                    [csrfHeader]: csrfToken
-                },
-                success: function() {
-                    console.log('Задача успешно завершена');
-                    location.reload();
-                },
-                error: function(xhr, status, error) {
-                    console.error('Ошибка завершения задачи: ' + status + ' - ' + error);
-                    alert('Ошибка завершения задачи: ' + xhr.status);
-                }
+        function attachEventHandlers() {
+            $('.edit-task-btn').off('click').on('click', function(e) {
+                e.preventDefault();
+                var taskId = $(this).data('task-id');
+                $.ajax({
+                    url: '/admin/tasks/edit/' + taskId,
+                    method: 'GET',
+                    success: function(data) {
+                        $('#editTaskModalContent .modal-body').html(data);
+                        $('#editTaskModal').modal('show');
+                        attachFormSubmitHandler(taskId);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Ошибка загрузки формы: ' + status + ' - ' + error);
+                        alert('Ошибка загрузки формы редактирования: ' + xhr.status);
+                    }
+                });
             });
-        });
+
+            $('.complete-task-btn').off('click').on('click', function(e) {
+                e.preventDefault();
+                var taskId = $(this).data('task-id');
+                $.ajax({
+                    url: '/admin/tasks/complete/' + taskId,
+                    method: 'POST',
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    },
+                    success: function() {
+                        updateTables();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Ошибка завершения задачи: ' + status + ' - ' + error);
+                        alert('Ошибка завершения задачи: ' + xhr.status);
+                    }
+                });
+            });
+
+            $('.delete-task-form').off('submit').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    },
+                    success: function() {
+                        updateTables();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Ошибка удаления задачи: ' + status + ' - ' + error);
+                        alert('Ошибка удаления задачи: ' + xhr.status);
+                    }
+                });
+            });
+        }
 
         function attachFormSubmitHandler(taskId) {
             $('#editTaskModalContent form').off('submit').on('submit', function(e) {
@@ -205,7 +155,7 @@
                     },
                     success: function() {
                         $('#editTaskModal').modal('hide');
-                        location.reload();
+                        updateTables();
                     },
                     error: function(xhr, status, error) {
                         console.error('Ошибка сохранения: ' + status + ' - ' + error);
@@ -221,6 +171,8 @@
                 });
             });
         }
+
+        attachEventHandlers(); // Инициализация обработчиков при загрузке
     });
 </script>
 </body>
