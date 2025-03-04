@@ -40,7 +40,7 @@ public class AdminController {
         if (task.isPresent()) {
             model.addAttribute("task", task.get());
             model.addAttribute("users", userRepository.findAll());
-            return "admin-edit-task";
+            return "fragments/admin-edit-task-modal";
         }
         return "redirect:/admin/tasks";
     }
@@ -53,7 +53,7 @@ public class AdminController {
         if (result.hasErrors()) {
             task.setId(id);
             model.addAttribute("user", userRepository.findAll());
-            return "admin-edit-task";
+            return "fragments/admin-edit-task-modal";
         }
         task.setId(id);
         taskRepository.save(task);
@@ -76,5 +76,16 @@ public class AdminController {
     public String deleteUser(@PathVariable("id") Long id) {
         userRepository.deleteById(id);
         return "redirect:/admin/users";
+    }
+
+    @PostMapping("/tasks/complete/{id}")
+    public String completeTask(@PathVariable("id") Long id) {
+        Optional<Task> task = taskRepository.findById(id);
+        if (task.isPresent()) {
+            Task existingTask = task.get();
+            existingTask.setCompleted(true);
+            taskRepository.save(existingTask);
+        }
+        return "redirect:/admin/tasks";
     }
 }

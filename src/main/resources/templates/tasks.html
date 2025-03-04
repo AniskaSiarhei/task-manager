@@ -34,37 +34,113 @@
 </nav>
 <div class="container mt-4">
     <h1>Мои задачи</h1>
-    <table class="table table-striped">
-        <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>Название</th>
-            <th>Описание</th>
-            <th>Дедлайн</th>
-            <th>Приоритет</th>
-            <th>Статус</th>
-            <th>Действия</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="task : ${tasks}">
-            <td th:text="${task.id}"></td>
-            <td th:text="${task.title}"></td>
-            <td th:text="${task.description}"></td>
-            <td th:text="${task.deadline}"></td>
-            <td th:text="${task.priority}"></td>
-            <td th:text="${task.completed ? 'Выполнено' : 'Не выполнено'}"></td>
-            <td>
-                <a th:href="@{/tasks/edit/{id}(id=${task.id})}" class="btn btn-sm btn-primary">Редактировать</a>
-                <form th:action="@{/tasks/delete/{id}(id=${task.id})}" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-sm btn-danger"
-                            onclick="return confirm('Вы уверены, что хотите удалить задачу?');">Удалить</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <div th:if="${tasks != null and !tasks.isEmpty()}">
+        <table class="table table-striped">
+            <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Описание</th>
+                <th>Дедлайн</th>
+                <th>Приоритет</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="task : ${tasks}">
+                <td th:text="${task.id}"></td>
+                <td th:text="${task.title}"></td>
+                <td th:text="${task.description}"></td>
+                <td th:text="${task.deadline}"></td>
+                <td th:text="${task.priority}"></td>
+                <td th:text="${task.completed ? 'Выполнено' : 'Не выполнено'}"></td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-primary edit-task-btn"
+                            th:data-task-id="${task.id}">Редактировать</button>
+                    <form th:action="@{/tasks/delete/{id}(id=${task.id})}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-danger"
+                                onclick="return confirm('Вы уверены, что хотите удалить задачу?');">Удалить</button>
+                    </form>
+                    <form th:action="@{/tasks/complete/{id}(id=${task.id})}" method="post" class="d-inline" th:if="${!task.completed}">
+                        <button type="submit" class="btn btn-sm btn-success">Выполнено</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div th:if="${tasks == null or tasks.isEmpty()}" class="alert alert-info">
+        У вас пока нет задач. Нажмите "Добавить задачу", чтобы создать первую!
+    </div>
 </div>
+
+<!-- Общее модальное окно -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" id="editTaskModalContent">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTaskModalLabel">Редактировать задачу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Содержимое будет загружено через AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Загрузка формы редактирования
+        $('.edit-task-btn').click(function(e) {
+            e.preventDefault();
+            var taskId = $(this).data('task-id');
+            $.ajax({
+                url: '/tasks/edit/' + taskId,
+                method: 'GET',
+                success: function(data) {
+                    $('#editTaskModalContent .modal-body').html(data);
+                    $('#editTaskModal').modal('show');
+                    attachFormSubmitHandler(taskId); // Подключаем обработчик отправки формы
+                },
+                error: function(xhr, status, error) {
+                    console.error('Ошибка загрузки формы: ' + status + ' - ' + error);
+                    alert('Ошибка загрузки формы редактирования: ' + xhr.status);
+                }
+            });
+        });
+
+        // Обработчик отправки формы
+        function attachFormSubmitHandler(taskId) {
+            $('#editTaskModalContent form').off('submit').on('submit', function(e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+                $.ajax({
+                    url: '/tasks/edit/' + taskId,
+                    method: 'POST',
+                    data: formData,
+                    success: function() {
+                        $('#editTaskModal').modal('hide');
+                        location.reload(); // Перезагрузка страницы после успешного сохранения
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Ошибка сохранения: ' + status + ' - ' + error);
+                        if (xhr.status === 400) { // Ошибка валидации
+                            $.get('/tasks/edit/' + taskId, function(data) {
+                                $('#editTaskModalContent .modal-body').html(data);
+                                attachFormSubmitHandler(taskId); // Повторно подключаем обработчик
+                            });
+                        } else {
+                            alert('Ошибка сохранения задачи: ' + xhr.status);
+                        }
+                    }
+                });
+            });
+        }
+    });
+</script>
 </body>
 </html>

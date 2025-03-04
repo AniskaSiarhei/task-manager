@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -37,7 +39,8 @@ public class TaskController {
     @GetMapping("/tasks")
     public String getAllTasks(Model model) {
         User currentUser = getCurrentUser();
-            model.addAttribute("tasks", taskRepository.findByUser(currentUser));
+        List<Task> tasks = taskRepository.findByUser(currentUser);
+        model.addAttribute("tasks", tasks != null ? tasks : Collections.emptyList());
         return "tasks";
     }
 
@@ -67,7 +70,7 @@ public class TaskController {
             User currentUser = getCurrentUser();
             if (isAdmin() || task.get().getUser().getId().equals(currentUser.getId())) {
                 model.addAttribute("task", task.get());
-                return "edit-task";
+                return "fragments/edit-task-modal";
             }
         }
         return "redirect:/tasks";
@@ -81,7 +84,7 @@ public class TaskController {
 
         if (result.hasErrors()) {
             task.setId(id);
-            return "edit-task";
+            return "fragments/edit-task-modal";
         }
 
         Optional<Task> existingTask = taskRepository.findById(id);
@@ -103,6 +106,20 @@ public class TaskController {
             User currentUser = getCurrentUser();
             if (isAdmin() || task.get().getUser().getId().equals(currentUser.getId())) {
                 taskRepository.delete(task.get());
+            }
+        }
+        return "redirect:/tasks";
+    }
+
+    @PostMapping("/tasks/complete/{id}")
+    public String completeTask(@PathVariable("id") Long id) {
+        Optional<Task> task = taskRepository.findById(id);
+        if (task.isPresent()) {
+            User currentUser = getCurrentUser();
+            if (isAdmin() || task.get().getUser().getId().equals(currentUser.getId())) {
+                Task existingTask = task.get();
+                existingTask.setCompleted(true);
+                taskRepository.save(existingTask);
             }
         }
         return "redirect:/tasks";
