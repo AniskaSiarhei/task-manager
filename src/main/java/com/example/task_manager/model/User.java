@@ -75,6 +75,10 @@ public class User implements UserDetails {
     }
 
     public String getUsername() {
+        return this.email;
+    }
+
+    public String getDisplayName() {
         return this.username;
     }
 

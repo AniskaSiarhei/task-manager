@@ -22,7 +22,7 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         // Проверяем, существует ли уже администратор
-        if (userRepository.findByUsername("admin").isEmpty()) {
+        if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
             User admin = new User();
             admin.setUsername("admin");
             admin.setEmail("admin@gmail.com");
@@ -31,7 +31,7 @@ public class DataInitializer implements ApplicationRunner {
             userRepository.save(admin);
             System.out.println("Администратор создан: userName=admin, password=12345");
         } else {
-            System.out.println("Администратор уже существует");
+            System.out.println("Администратор уже существует.");
         }
     }
 }

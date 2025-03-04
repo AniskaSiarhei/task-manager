@@ -10,7 +10,8 @@
     <div class="row justify-content-center">
         <div class="col-md-4">
             <h1 class="text-center">Регистрация</h1>
-            <form th:action="@{/register}" th:object="${user}" method="post" class="needs-validation" novalidate>
+            <form th:action="@{/register}" th:object="${user}" method="post" class="needs-validation" novalidate id="registerForm">
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div class="mb-3">
                     <label for="username" class="form-label">Имя пользователя</label>
                     <input type="text" class="form-control" id="username" th:field="*{username}" required>
@@ -26,6 +27,12 @@
                     <input type="password" class="form-control" id="password" th:field="*{password}" required>
                     <div class="invalid-feedback">Введите пароль</div>
                 </div>
+                <div class="mb-3">
+                    <label for="repeatPassword" class="form-label">Повторите пароль</label>
+                    <input type="password" class="form-control" id="repeatPassword" name="repeatPassword" required>
+                    <div class="invalid-feedback">Повторите пароль</div>
+                    <div id="passwordMismatch" class="invalid-feedback" style="display: none;">Пароли не совпадают</div>
+                </div>
                 <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
             </form>
             <p class="text-center mt-3"><a href="/login">Войти</a></p>
@@ -36,15 +43,41 @@
 <script>
     (function () {
         'use strict';
-        var forms = document.querySelectorAll('.needs-validation');
-        Array.prototype.slice.call(forms).forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
+        var form = document.getElementById('registerForm');
+        var password = document.getElementById('password');
+        var repeatPassword = document.getElementById('repeatPassword');
+        var passwordMismatch = document.getElementById('passwordMismatch');
+
+        form.addEventListener('submit', function (event) {
+            // Базовая валидация Bootstrap
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            // Проверка совпадения паролей
+            if (password.value !== repeatPassword.value) {
+                event.preventDefault();
+                event.stopPropagation();
+                repeatPassword.classList.add('is-invalid');
+                passwordMismatch.style.display = 'block';
+            } else {
+                repeatPassword.classList.remove('is-invalid');
+                passwordMismatch.style.display = 'none';
+            }
+
+            form.classList.add('was-validated');
+        }, false);
+
+        // Динамическая проверка при вводе
+        repeatPassword.addEventListener('input', function () {
+            if (password.value !== repeatPassword.value) {
+                repeatPassword.classList.add('is-invalid');
+                passwordMismatch.style.display = 'block';
+            } else {
+                repeatPassword.classList.remove('is-invalid');
+                passwordMismatch.style.display = 'none';
+            }
         });
     })();
 </script>

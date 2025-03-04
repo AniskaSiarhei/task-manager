@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 
 @Controller
+@RequestMapping("/tasks") // Добавим базовый путь для всех методов
 public class TaskController {
 
-    private final TaskRepository taskRepository;
-
-    public TaskController(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
-    }
+    @Autowired
+    private TaskRepository taskRepository;
 
     private User getCurrentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -36,35 +36,42 @@ public class TaskController {
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
     }
 
-    @GetMapping("/tasks")
+    @GetMapping
     public String getAllTasks(Model model) {
         User currentUser = getCurrentUser();
-        List<Task> tasks = taskRepository.findByUser(currentUser);
-        model.addAttribute("tasks", tasks != null ? tasks : Collections.emptyList());
+        List<Task> allTasks = taskRepository.findByUser(currentUser);
+        List<Task> incompleteTasks = allTasks.stream()
+                .filter(task -> !task.isCompleted())
+                .collect(Collectors.toList());
+        List<Task> completedTasks = allTasks.stream()
+                .filter(Task::isCompleted)
+                .collect(Collectors.toList());
+
+        model.addAttribute("incompleteTasks", incompleteTasks);
+        model.addAttribute("completedTasks", completedTasks);
+        model.addAttribute("displayName", currentUser.getDisplayName());
         return "tasks";
     }
 
-    @GetMapping("/tasks/add")       // displays the form
+    @GetMapping("/add")
     public String showAddTaskForm(Model model) {
         model.addAttribute("task", new Task());
         return "add-task";
     }
 
-    @PostMapping("tasks/add")       // saves the task in the database and redirects it to the task list
-    public String addTask(@Valid @ModelAttribute("task") Task task, BindingResult result) {
+    @PostMapping("/add")
+    public String addTask(@Valid @ModelAttribute("task") Task task, BindingResult result, Model model) {
         if (result.hasErrors()) {
             return "add-task";
         }
-
-        task.setCompleted(false);   //
+        task.setCompleted(false);
         task.setUser(getCurrentUser());
         taskRepository.save(task);
         return "redirect:/tasks";
     }
 
-    @GetMapping("/tasks/edit/{id}")
+    @GetMapping("/edit/{id}")
     public String showEditTaskForm(@PathVariable("id") Long id, Model model) {
-
         Optional<Task> task = taskRepository.findById(id);
         if (task.isPresent()) {
             User currentUser = getCurrentUser();
@@ -76,17 +83,13 @@ public class TaskController {
         return "redirect:/tasks";
     }
 
-    @PostMapping("/tasks/edit/{id}")
-    public String updateTask(@PathVariable("id") Long id,
-                             @Valid @ModelAttribute("task") Task task,
-                             BindingResult result,
-                             Model model) {
-
+    @PostMapping("/edit/{id}")
+    public String updateTask(@PathVariable("id") Long id, @Valid @ModelAttribute("task") Task task,
+                             BindingResult result, Model model) {
         if (result.hasErrors()) {
             task.setId(id);
             return "fragments/edit-task-modal";
         }
-
         Optional<Task> existingTask = taskRepository.findById(id);
         if (existingTask.isPresent()) {
             User currentUser = getCurrentUser();
@@ -99,27 +102,29 @@ public class TaskController {
         return "redirect:/tasks";
     }
 
-    @PostMapping("/tasks/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String deleteTask(@PathVariable("id") Long id) {
         Optional<Task> task = taskRepository.findById(id);
         if (task.isPresent()) {
             User currentUser = getCurrentUser();
             if (isAdmin() || task.get().getUser().getId().equals(currentUser.getId())) {
-                taskRepository.delete(task.get());
+                taskRepository.deleteById(id);
             }
         }
         return "redirect:/tasks";
     }
 
-    @PostMapping("/tasks/complete/{id}")
+    @PostMapping("/complete/{id}")
     public String completeTask(@PathVariable("id") Long id) {
+        System.out.println("Запрос на завершение задачи ID: " + id); // Отладка
         Optional<Task> task = taskRepository.findById(id);
         if (task.isPresent()) {
             User currentUser = getCurrentUser();
             if (isAdmin() || task.get().getUser().getId().equals(currentUser.getId())) {
                 Task existingTask = task.get();
                 existingTask.setCompleted(true);
-                taskRepository.save(existingTask);
+                taskRepository.saveAndFlush(existingTask);
+                System.out.println("Задача завершена: " + existingTask.getId());
             }
         }
         return "redirect:/tasks";

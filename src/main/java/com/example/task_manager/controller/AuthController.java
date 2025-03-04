@@ -31,7 +31,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(User user) {
+    public String register(User user,
+                           @RequestParam("repeatPassword") String repeatPassword,
+                           Model model) {
+        if (!user.getPassword().equals(repeatPassword)) {
+            model.addAttribute("error", "Passwords do not match");
+            return "register";
+        }
         userService.saveUser(user, false);      // Все новые пользователи - не админы
         return "redirect:/login";
     }
