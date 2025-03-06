@@ -56,13 +56,13 @@ public class TaskController {
     @GetMapping("/add")
     public String showAddTaskForm(Model model) {
         model.addAttribute("task", new Task());
-        return "add-task";
+        return "fragments/add-task-modal";
     }
 
     @PostMapping("/add")
     public String addTask(@Valid @ModelAttribute("task") Task task, BindingResult result, Model model) {
         if (result.hasErrors()) {
-            return "add-task";
+            return "fragments/add-task-modal";
         }
         task.setCompleted(false);
         task.setUser(getCurrentUser());

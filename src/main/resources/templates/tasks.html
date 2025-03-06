@@ -15,7 +15,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/tasks/add">Добавить задачу</a>
+                    <button type="button" class="nav-link btn btn-link text-light" id="addTaskBtn">Добавить задачу</button>
                 </li>
                 <li class="nav-item" th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
                     <a class="nav-link" href="/admin/tasks">Все задачи</a>
@@ -56,11 +56,27 @@
     </div>
 </div>
 
+<!-- Модальное окно для редактирования -->
 <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content" id="editTaskModalContent">
             <div class="modal-header">
                 <h5 class="modal-title" id="editTaskModalLabel">Редактировать задачу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Содержимое будет загружено через AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для добавления -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" id="addTaskModalContent">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTaskModalLabel">Добавить задачу</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -96,7 +112,7 @@
                     success: function(data) {
                         $('#editTaskModalContent .modal-body').html(data);
                         $('#editTaskModal').modal('show');
-                        attachFormSubmitHandler(taskId);
+                        attachFormSubmitHandler(taskId, '#editTaskModal');
                     },
                     error: function(xhr, status, error) {
                         console.error('Ошибка загрузки формы: ' + status + ' - ' + error);
@@ -143,10 +159,27 @@
                     }
                 });
             });
+
+            $('#addTaskBtn').off('click').on('click', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/tasks/add',
+                    method: 'GET',
+                    success: function(data) {
+                        $('#addTaskModalContent .modal-body').html(data);
+                        $('#addTaskModal').modal('show');
+                        attachAddFormSubmitHandler();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Ошибка загрузки формы добавления: ' + status + ' - ' + error);
+                        alert('Ошибка загрузки формы добавления: ' + xhr.status);
+                    }
+                });
+            });
         }
 
-        function attachFormSubmitHandler(taskId) {
-            $('#editTaskModalContent form').off('submit').on('submit', function(e) {
+        function attachFormSubmitHandler(taskId, modalId) {
+            $(modalId + 'Content form').off('submit').on('submit', function(e) {
                 e.preventDefault();
                 var formData = $(this).serialize();
                 $.ajax({
@@ -157,18 +190,48 @@
                         [csrfHeader]: csrfToken
                     },
                     success: function() {
-                        $('#editTaskModal').modal('hide');
+                        $(modalId).modal('hide');
                         updateTables();
                     },
                     error: function(xhr, status, error) {
                         console.error('Ошибка сохранения: ' + status + ' - ' + error);
                         if (xhr.status === 400) {
                             $.get('/tasks/edit/' + taskId, function(data) {
-                                $('#editTaskModalContent .modal-body').html(data);
-                                attachFormSubmitHandler(taskId);
+                                $(modalId + 'Content .modal-body').html(data);
+                                attachFormSubmitHandler(taskId, modalId);
                             });
                         } else {
                             alert('Ошибка сохранения задачи: ' + xhr.status);
+                        }
+                    }
+                });
+            });
+        }
+
+        function attachAddFormSubmitHandler() {
+            $('#addTaskModalContent form').off('submit').on('submit', function(e) {
+                e.preventDefault();
+                var formData = $(this).serialize();
+                $.ajax({
+                    url: '/tasks/add',
+                    method: 'POST',
+                    data: formData,
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    },
+                    success: function() {
+                        $('#addTaskModal').modal('hide');
+                        updateTables();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Ошибка добавления задачи: ' + status + ' - ' + error);
+                        if (xhr.status === 400) {
+                            $.get('/tasks/add', function(data) {
+                                $('#addTaskModalContent .modal-body').html(data);
+                                attachAddFormSubmitHandler();
+                            });
+                        } else {
+                            alert('Ошибка добавления задачи: ' + xhr.status);
                         }
                     }
                 });

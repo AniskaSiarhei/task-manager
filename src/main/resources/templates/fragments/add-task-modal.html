@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="addTaskModal(task)">
+<form th:action="@{/tasks/add}" th:object="${task}" method="post" class="needs-validation" novalidate>
+    <div class="mb-3">
+        <label for="title" class="form-label">Название</label>
+        <input type="text" class="form-control" id="title" th:field="*{title}" th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" required>
+        <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Описание</label>
+        <textarea class="form-control" id="description" th:field="*{description}" th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"></textarea>
+        <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+    </div>
+    <div class="mb-3">
+        <label for="deadline" class="form-label">Дедлайн</label>
+        <input type="datetime-local" class="form-control" id="deadline" th:field="*{deadline}" th:classappend="${#fields.hasErrors('deadline')} ? 'is-invalid'" required>
+        <div class="invalid-feedback" th:if="${#fields.hasErrors('deadline')}" th:errors="*{deadline}"></div>
+    </div>
+    <div class="mb-3">
+        <label for="priority" class="form-label">Приоритет</label>
+        <select class="form-select" id="priority" th:field="*{priority}" th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid'">
+            <option value="">Выберите приоритет</option>
+            <option value="LOW">Низкий</option>
+            <option value="MEDIUM">Средний</option>
+            <option value="HIGH">Высокий</option>
+        </select>
+        <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        <button type="submit" class="btn btn-primary">Добавить</button>
+    </div>
+</form>
+</html>
