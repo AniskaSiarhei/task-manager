@@ -5,6 +5,7 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,7 +17,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,6 +45,11 @@ public class TaskController {
         User currentUser = getCurrentUser();
         List<Task> allTasks = taskRepository.findByUser(currentUser);
         LocalDateTime now = LocalDateTime.now();
+
+        long overdueCount = allTasks.stream()
+                .filter(task -> !task.isCompleted() && task.getDeadline() != null && task.getDeadline().isBefore(now))
+                .count();
+
         allTasks.forEach(task -> task.setOverdue(!task.isCompleted() && task.getDeadline() != null && task.getDeadline().isBefore(now)));
         List<Task> incompleteTasks = allTasks.stream()
                 .filter(task -> !task.isCompleted())
@@ -53,6 +61,7 @@ public class TaskController {
         model.addAttribute("incompleteTasks", incompleteTasks);
         model.addAttribute("completedTasks", completedTasks);
         model.addAttribute("displayName", currentUser.getDisplayName());
+        model.addAttribute("overdueCount", overdueCount);
         return "tasks";
     }
 
@@ -63,14 +72,25 @@ public class TaskController {
     }
 
     @PostMapping("/add")
-    public String addTask(@Valid @ModelAttribute("task") Task task, BindingResult result, Model model) {
+    public ResponseEntity<Map<String, Object>> addTask(@Valid @ModelAttribute("task") Task task, BindingResult result) {
+        Map<String, Object> response = new HashMap<>();
         if (result.hasErrors()) {
-            return "fragments/add-task-modal";
+            response.put("success", false);
+            response.put("errors", result.getAllErrors());
+            return ResponseEntity.badRequest().body(response);
         }
         task.setCompleted(false);
         task.setUser(getCurrentUser());
         taskRepository.save(task);
-        return "redirect:/tasks";
+
+        List<Task> allTasks = taskRepository.findByUser(getCurrentUser());
+        long overdueCount = allTasks.stream()
+                .filter(t -> !t.isCompleted() && t.getDeadline() != null && t.getDeadline().isBefore(LocalDateTime.now()))
+                .count();
+
+        response.put("success", true);
+        response.put("overdueCount", overdueCount);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/edit/{id}")

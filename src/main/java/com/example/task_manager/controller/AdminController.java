@@ -36,6 +36,11 @@ public class AdminController {
         List<Task> allTasks = taskRepository.findAll();
 
         LocalDateTime now = LocalDateTime.now();
+
+        long overdueCount = allTasks.stream()
+                        .filter(task -> !task.isCompleted() && task.getDeadline() != null && task.getDeadline().isBefore(now))
+                                .count();
+
         allTasks.forEach(task -> task.setOverdue(!task.isCompleted() && task.getDeadline() != null && task.getDeadline().isBefore(now)));
         List<Task> incompleteTasks = allTasks.stream()
                 .filter(task -> !task.isCompleted())
@@ -46,6 +51,7 @@ public class AdminController {
 
         model.addAttribute("incompleteTasks", incompleteTasks);
         model.addAttribute("completedTasks", completedTasks);
+        model.addAttribute("overdueCount", overdueCount);
         return "admin-tasks";
     }
 

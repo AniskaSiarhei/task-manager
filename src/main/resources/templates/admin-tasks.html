@@ -22,6 +22,9 @@
                     <a class="nav-link" href="/admin/users">Пользователи</a>
                 </li>
                 <li class="nav-item">
+                    <span class="nav-link text-light">Просрочено: <span id="overdueCountBadge" class="badge bg-danger" th:text="${overdueCount}"></span></span>
+                </li>
+                <li class="nav-item">
                     <form th:action="@{/logout}" method="post" class="d-inline">
                         <button type="submit" class="nav-link btn btn-link text-light">Выйти</button>
                     </form>
@@ -31,6 +34,18 @@
     </div>
 </nav>
 <div class="container mt-4">
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="overdueToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-danger text-white">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong class="me-auto">Просроченные задачи</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <span id="overdueMessage" th:text="${overdueCount > 0} ? 'В системе ' + ${overdueCount} + ' просроченных задач!' : 'Все задачи выполнены вовремя!'"></span>
+            </div>
+        </div>
+    </div>
     <h1>Все задачи</h1>
 
     <ul class="nav nav-tabs" id="adminTaskTabs" role="tablist">
@@ -75,12 +90,30 @@
         var csrfToken = /*[[${_csrf.token}]]*/ '';
         var csrfHeader = /*[[${_csrf.headerName}]]*/ '';
 
+        // Показываем Toast, если есть просроченные задачи при загрузке
+        if ([[${overdueCount}]] > 0) {
+            var toast = new bootstrap.Toast(document.getElementById('overdueToast'));
+            toast.show();
+        }
+
         function updateTables() {
             $.get('/admin/tasks', function(data) {
                 var $newContent = $(data);
                 $('#incomplete').html($newContent.find('#incomplete').html());
                 $('#completed').html($newContent.find('#completed').html());
                 attachEventHandlers();
+
+                // Обновляем счетчик просроченных задач
+                var overdueCount = $newContent.find('#overdueCountBadge').text();
+                $('#overdueCountBadge').text(overdueCount);
+
+                // Обновляем Toast
+                if (overdueCount > 0) {
+                    $('#overdueMessage').text('В системе ' + overdueCount + ' просроченных задач!');
+                    new bootstrap.Toast($('#overdueToast')).show();
+                } else {
+                    $('#overdueMessage').text('Все задачи выполнены вовремя!');
+                }
             });
         }
 
@@ -96,9 +129,8 @@
                         $('#editTaskModal').modal('show');
                         attachFormSubmitHandler(taskId);
                     },
-                    error: function(xhr, status, error) {
-                        console.error('Ошибка загрузки формы: ' + status + ' - ' + error);
-                        alert('Ошибка загрузки формы редактирования: ' + xhr.status);
+                    error: function(xhr) {
+                        alert('Ошибка загрузки формы: ' + xhr.status);
                     }
                 });
             });
@@ -109,14 +141,9 @@
                 $.ajax({
                     url: '/admin/tasks/complete/' + taskId,
                     method: 'POST',
-                    headers: {
-                        [csrfHeader]: csrfToken
-                    },
-                    success: function() {
-                        updateTables();
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Ошибка завершения задачи: ' + status + ' - ' + error);
+                    headers: { [csrfHeader]: csrfToken },
+                    success: updateTables,
+                    error: function(xhr) {
                         alert('Ошибка завершения задачи: ' + xhr.status);
                     }
                 });
@@ -129,14 +156,9 @@
                     url: form.attr('action'),
                     method: 'POST',
                     data: form.serialize(),
-                    headers: {
-                        [csrfHeader]: csrfToken
-                    },
-                    success: function() {
-                        updateTables();
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Ошибка удаления задачи: ' + status + ' - ' + error);
+                    headers: { [csrfHeader]: csrfToken },
+                    success: updateTables,
+                    error: function(xhr) {
                         alert('Ошибка удаления задачи: ' + xhr.status);
                     }
                 });
@@ -151,15 +173,12 @@
                     url: '/admin/tasks/edit/' + taskId,
                     method: 'POST',
                     data: formData,
-                    headers: {
-                        [csrfHeader]: csrfToken
-                    },
+                    headers: { [csrfHeader]: csrfToken },
                     success: function() {
                         $('#editTaskModal').modal('hide');
                         updateTables();
                     },
-                    error: function(xhr, status, error) {
-                        console.error('Ошибка сохранения: ' + status + ' - ' + error);
+                    error: function(xhr) {
                         if (xhr.status === 400) {
                             $.get('/admin/tasks/edit/' + taskId, function(data) {
                                 $('#editTaskModalContent .modal-body').html(data);
@@ -173,7 +192,10 @@
             });
         }
 
-        attachEventHandlers(); // Инициализация обработчиков при загрузке
+        attachEventHandlers();
+
+        // Опциональное автоматическое обновление
+        setInterval(updateTables, 60000); // Каждые 60 секунд
     });
 </script>
 </body>
