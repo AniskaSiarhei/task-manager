@@ -14,23 +14,22 @@
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div class="mb-3">
                     <label for="username" class="form-label">Имя пользователя</label>
-                    <input type="text" class="form-control" id="username" th:field="*{username}" required>
-                    <div class="invalid-feedback">Введите имя пользователя</div>
+                    <input type="text" class="form-control" id="username" th:field="*{username}" th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 </div>
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" th:field="*{email}" required>
-                    <div class="invalid-feedback">Введите корректный email</div>
+                    <input type="email" class="form-control" id="email" th:field="*{email}" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">Пароль</label>
-                    <input type="password" class="form-control" id="password" th:field="*{password}" required>
-                    <div class="invalid-feedback">Введите пароль</div>
+                    <input type="password" class="form-control" id="password" th:field="*{password}" th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'" required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
                 <div class="mb-3">
                     <label for="repeatPassword" class="form-label">Повторите пароль</label>
                     <input type="password" class="form-control" id="repeatPassword" name="repeatPassword" required>
-                    <div class="invalid-feedback">Повторите пароль</div>
                     <div id="passwordMismatch" class="invalid-feedback" style="display: none;">Пароли не совпадают</div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
@@ -49,13 +48,10 @@
         var passwordMismatch = document.getElementById('passwordMismatch');
 
         form.addEventListener('submit', function (event) {
-            // Базовая валидация Bootstrap
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
             }
-
-            // Проверка совпадения паролей
             if (password.value !== repeatPassword.value) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -65,11 +61,9 @@
                 repeatPassword.classList.remove('is-invalid');
                 passwordMismatch.style.display = 'none';
             }
-
             form.classList.add('was-validated');
         }, false);
 
-        // Динамическая проверка при вводе
         repeatPassword.addEventListener('input', function () {
             if (password.value !== repeatPassword.value) {
                 repeatPassword.classList.add('is-invalid');

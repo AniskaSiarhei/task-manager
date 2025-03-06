@@ -31,6 +31,9 @@ public class UserService implements UserDetailsService {
     }
 
     public void saveUser(User user, boolean isAdmin) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Пользователь с таким email уже существует!");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (isAdmin) {
             user.setRoles(Arrays.asList("USER", "ADMIN"));
