@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -39,6 +40,9 @@ public class Task {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Transient
+    private boolean isOverdue;
+
     public Task() {
     }
 
@@ -70,6 +74,10 @@ public class Task {
         return this.user;
     }
 
+    public boolean isOverdue() {
+        return this.isOverdue;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -98,6 +106,10 @@ public class Task {
         this.user = user;
     }
 
+    public void setOverdue(boolean isOverdue) {
+        this.isOverdue = isOverdue;
+    }
+
     public boolean equals(final Object o) {
         if (o == this) return true;
         if (!(o instanceof Task)) return false;
@@ -123,6 +135,7 @@ public class Task {
         final Object this$user = this.getUser();
         final Object other$user = other.getUser();
         if (this$user == null ? other$user != null : !this$user.equals(other$user)) return false;
+        if (this.isOverdue() != other.isOverdue()) return false;
         return true;
     }
 
@@ -146,10 +159,11 @@ public class Task {
         result = result * PRIME + (this.isCompleted() ? 79 : 97);
         final Object $user = this.getUser();
         result = result * PRIME + ($user == null ? 43 : $user.hashCode());
+        result = result * PRIME + (this.isOverdue() ? 79 : 97);
         return result;
     }
 
     public String toString() {
-        return "Task(id=" + this.getId() + ", title=" + this.getTitle() + ", description=" + this.getDescription() + ", deadline=" + this.getDeadline() + ", priority=" + this.getPriority() + ", completed=" + this.isCompleted() + ", user=" + this.getUser() + ")";
+        return "Task(id=" + this.getId() + ", title=" + this.getTitle() + ", description=" + this.getDescription() + ", deadline=" + this.getDeadline() + ", priority=" + this.getPriority() + ", completed=" + this.isCompleted() + ", user=" + this.getUser() + ", isOverdue=" + this.isOverdue() + ")";
     }
 }

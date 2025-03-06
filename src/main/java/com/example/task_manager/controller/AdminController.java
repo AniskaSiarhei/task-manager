@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +34,9 @@ public class AdminController {
     public String getAllTasks(Model model) {
 
         List<Task> allTasks = taskRepository.findAll();
+
+        LocalDateTime now = LocalDateTime.now();
+        allTasks.forEach(task -> task.setOverdue(!task.isCompleted() && task.getDeadline() != null && task.getDeadline().isBefore(now)));
         List<Task> incompleteTasks = allTasks.stream()
                 .filter(task -> !task.isCompleted())
                 .toList();
