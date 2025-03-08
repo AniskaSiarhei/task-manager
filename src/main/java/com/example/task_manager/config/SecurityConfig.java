@@ -5,10 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -37,6 +39,16 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .permitAll()
                         .defaultSuccessUrl("/tasks", true) // перенаправление после успешного входа
+                        .failureHandler(((request, response, exception) -> {
+                            String errorMessage = "Неверный email или пароль";
+                            if (exception instanceof UsernameNotFoundException) {
+                                errorMessage = "Пользователь с таким email не найден";
+                            } else if (exception instanceof BadCredentialsException) {
+                                errorMessage = "Неверный пароль";
+                            }
+                            request.getSession().setAttribute("error", errorMessage);
+                            response.sendRedirect("/login?error");
+                        }))
                 )
                 .logout((logout) -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout")) // указываем URL выхода
