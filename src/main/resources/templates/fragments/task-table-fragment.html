@@ -18,12 +18,12 @@
             <td th:classappend="${task.isOverdue} ? 'text-danger' : ''"
                 th:text="${task.deadline != null} ? ${#temporals.format(task.deadline, 'dd.MM.yyyy HH:mm')} : 'Не указан'"></td>
             <td>
-                    <span th:switch="${task.priority}">
-                        <span th:case="'LOW'" class="badge bg-success">Низкий</span>
-                        <span th:case="'MEDIUM'" class="badge bg-warning text-dark">Средний</span>
-                        <span th:case="'HIGH'" class="badge bg-danger">Высокий</span>
-                        <span th:case="*" class="badge bg-secondary">Не указан</span>
-                    </span>
+    <span th:switch="${task.priority}">
+        <span th:case="${T(com.example.task_manager.model.Priority).LOW}" class="badge bg-success" th:text="${task.priority.displayName}"></span>
+        <span th:case="${T(com.example.task_manager.model.Priority).MEDIUM}" class="badge bg-warning text-dark" th:text="${task.priority.displayName}"></span>
+        <span th:case="${T(com.example.task_manager.model.Priority).HIGH}" class="badge bg-danger" th:text="${task.priority.displayName}"></span>
+        <span th:case="*" class="badge bg-secondary">Не указан</span>
+    </span>
             </td>
             <td>
                 <button th:if="${!isCompleted}" type="button" class="btn btn-sm btn-success complete-task-btn me-1"

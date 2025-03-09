@@ -1,6 +1,8 @@
 package com.example.task_manager.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -32,8 +34,10 @@ public class Task {
     @NotNull(message = "Дедлайн обязателен")
     private LocalDateTime deadline;
 
-    @NotBlank(message = "Приоритет обязателен")
-    private String priority;    // "LOW", "MEDIUM", "HIGH"
+    @NotNull(message = "Приоритет обязателен")
+    @Enumerated(EnumType.STRING)
+    private Priority priority;
+
     private boolean completed;
 
     @ManyToOne
@@ -62,7 +66,7 @@ public class Task {
         return this.deadline;
     }
 
-    public @NotBlank(message = "Приоритет обязателен") String getPriority() {
+    public Priority getPriority() {
         return this.priority;
     }
 
@@ -94,7 +98,7 @@ public class Task {
         this.deadline = deadline;
     }
 
-    public void setPriority(@NotBlank(message = "Приоритет обязателен") String priority) {
+    public void setPriority(Priority priority) {
         this.priority = priority;
     }
 

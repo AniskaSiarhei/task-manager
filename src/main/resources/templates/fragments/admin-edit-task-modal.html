@@ -20,9 +20,9 @@
         <label for="priority" class="form-label">Приоритет</label>
         <select class="form-select" id="priority" th:field="*{priority}" th:classappend="${#fields.hasErrors('priority')} ? 'is-invalid'">
             <option value="">Выберите приоритет</option>
-            <option value="LOW">Низкий</option>
-            <option value="MEDIUM">Средний</option>
-            <option value="HIGH">Высокий</option>
+            <option th:each="priority : ${T(com.example.task_manager.model.Priority).values()}"
+                    th:value="${priority}"
+                    th:text="${priority.displayName}"></option>
         </select>
         <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}"></div>
     </div>
